@@ -34,8 +34,9 @@
         let status = document.getElementById('statusbox');
         const urlSearchParams = new URLSearchParams(window.location.search);
         const videoManifestSource = urlSearchParams.get("video");
-        const autosave = false;
-
+        const autosave = urlSearchParams.get("autosave") === 'true' | false;
+        const autoplay = urlSearchParams.get("autoplay") === 'true' | true;
+        
         let player = new DashjsQlog.dashjs_qlog_player(video, videoManifestSource, autosave, status);
 
         async function start() {

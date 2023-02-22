@@ -16,7 +16,7 @@ interface VideoQlogDB extends idb.DBSchema {
     };
 }
 
-interface IVideoEvent {
+export interface IVideoEvent {
     time: number,
     category: string,
     type: qlog.EventType,
@@ -55,7 +55,7 @@ export class VideoQlog {
         await this.overviewDatabase.registerNewDatabase(databaseName);
     }
 
-    private getCurrentTimeOffset(): number {
+    public getCurrentTimeOffset(): number {
         return window.performance.now() - this.startTimer;
     }
 

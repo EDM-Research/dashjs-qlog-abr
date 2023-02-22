@@ -36,11 +36,30 @@
         const videoManifestSource = urlSearchParams.get("video");
         const autosave = urlSearchParams.get("autosave") === 'true' | false;
         const autoplay = urlSearchParams.get("autoplay") === 'true' | true;
+        const userSimulatedInteractionFile = urlSearchParams.get("interaction");
+        console.log(userSimulatedInteractionFile);
         
         let player = new DashjsQlog.dashjs_qlog_player(video, videoManifestSource, autosave, status);
 
         async function start() {
             await player.setup();
+            
+            if (userSimulatedInteractionFile) {
+                const interactionsResponse = await fetch(userSimulatedInteractionFile);
+                const interactionsQlog = await interactionsResponse.json();
+
+                let interactions = [];
+                const events = interactionsQlog['traces'][0]['events'];
+
+                events.forEach(event => {
+                    if (event['type'] === 'player_interaction') {
+                        interactions.push(event);
+                    }
+                });
+
+                player.setSimulatedInteractions(interactions);
+            }
+
             const t2 = new Date();
             player.setStatus('setup took', (t2 - t1).toString() + " ms", 'black');
             player.setStatus('autosave', autosave.toString(), 'black');

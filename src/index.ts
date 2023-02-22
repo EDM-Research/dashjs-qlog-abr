@@ -27,6 +27,8 @@ export class dashjs_qlog_player {
     private statusBox: HTMLElement;
     private statusItems: { [key: string]: HTMLElement };
     private loggingHelpers: LoggingHelpers;
+    private simulatedInteractions: Array<VideoQlog.IVideoEvent>;
+    private simulatedInteractionsIndex: number;
 
     public autoplay: boolean;
 
@@ -50,6 +52,8 @@ export class dashjs_qlog_player {
         this.statusItems = {};
         this.setStatus('status', 'uninitialised', 'black');
         this.loggingHelpers = new LoggingHelpers();
+        this.simulatedInteractions = new Array<VideoQlog.IVideoEvent>();
+        this.simulatedInteractionsIndex = 0;
     }
 
     public async setup() {
@@ -410,6 +414,63 @@ export class dashjs_qlog_player {
         this.active = false;
         clearInterval(this.eventPoller);
         clearInterval(this.eventPollerChrome);
+    }
+
+    public setSimulatedInteractions(interactions: Array<VideoQlog.IVideoEvent>) {
+        this.simulatedInteractions = interactions;
+        console.log(this.simulatedInteractions);
+
+        setTimeout(() => {
+            // execute
+            const interaction = this.simulatedInteractions[this.simulatedInteractionsIndex];
+            this.simulateInteraction(interaction);
+            
+            // queue
+            this.queueNextInteractionSimulation();
+        }, this.simulatedInteractions[this.simulatedInteractionsIndex].time - this.videoQlog.getCurrentTimeOffset());
+    }
+
+    private async simulateInteraction(interaction: any) {
+        let itype = interaction['data']['state'];
+        switch (itype) {
+            case 'play':
+                this.player.play();
+                break;
+
+            case 'pause':
+                this.player.pause();
+                break;
+
+            case 'volume':
+                this.player.setVolume(interaction['data']['volume']);
+                break;
+
+            case 'playback_rate':
+                this.player.setPlaybackRate(interaction['data']['playback_rate']);
+                break;
+
+            case 'seek':
+                this.player.seek(interaction['data']['playhead']['ms']/1000);
+                break;
+        
+            default:
+                console.log(itype, interaction)
+                break;
+        }
+    }
+
+    private async queueNextInteractionSimulation() {
+        this.simulatedInteractionsIndex++;
+        if (this.simulatedInteractionsIndex < this.simulatedInteractions.length) {
+            setTimeout(() => {
+                // execute
+                const interaction = this.simulatedInteractions[this.simulatedInteractionsIndex];
+                this.simulateInteraction(interaction);
+                
+                // queue
+                this.queueNextInteractionSimulation();
+            }, this.simulatedInteractions[this.simulatedInteractionsIndex].time - this.videoQlog.getCurrentTimeOffset());
+        }
     }
 
     public async downloadCurrentLog() {

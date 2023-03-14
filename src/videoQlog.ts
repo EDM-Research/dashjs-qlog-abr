@@ -77,7 +77,7 @@ export class VideoQlog {
                             type: qlog.VantagePointType.client
                         },
                         common_fields: {
-                            protocol_type: "QLOG_ABR", // TODO jherbots
+                            protocol_type: qlog.Protocol.dash,
                             reference_time: "" + this.startTimestamp,
                             time_format: "relative",
                         },
@@ -222,7 +222,7 @@ export class VideoQlog {
                 level_ms: level
             }
         };
-        await this.registerEvent(this.wrapEventData("video", qlog.BufferEventType.occupancy_update, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.buffer, qlog.BufferEventType.occupancy_update, eventData));
     }
 
     public async onRebuffer(playhead: number) {
@@ -231,7 +231,7 @@ export class VideoQlog {
                 ms: playhead
             }
         };
-        await this.registerEvent(this.wrapEventData("video", qlog.PlaybackEventType.stall, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.playback, qlog.PlaybackEventType.stall, eventData));
     }
 
     public async onPlayerInteraction(action: qlog.InteractionState, playhead_ms: number, playback_rate?: number, volume?: number) {
@@ -247,7 +247,7 @@ export class VideoQlog {
         if (volume !== undefined) {
             eventData.volume = volume;
         }
-        await this.registerEvent(this.wrapEventData("video", qlog.PlaybackEventType.player_interaction, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.playback, qlog.PlaybackEventType.player_interaction, eventData));
     }
 
     public inferMediaTypeFromURL(url: string): qlog.MediaType {
@@ -291,7 +291,7 @@ export class VideoQlog {
             resource_url: url,
             media_type: media_type,
         };
-        await this.registerEvent(this.wrapEventData(qlog.EventCategory.abr, qlog.NetworkEventType.request, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.network, qlog.NetworkEventType.request, eventData));
     }
 
     public async onRequestUpdate(url: string, bytes_received: number, rtt?: number) {
@@ -302,14 +302,14 @@ export class VideoQlog {
         if (rtt !== undefined) {
             eventData.rtt = rtt;
         }
-        await this.registerEvent(this.wrapEventData(qlog.EventCategory.abr, qlog.NetworkEventType.request_update, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.network, qlog.NetworkEventType.request_update, eventData));
     }
 
     public async onRequestAbort(url: string) {
         let eventData: qlog.IEventNetworkRequestAbort = {
             resource_url: url,
         };
-        await this.registerEvent(this.wrapEventData(qlog.EventCategory.abr, qlog.NetworkEventType.request_abort, eventData));
+        await this.registerEvent(this.wrapEventData(qlog.EventCategory.network, qlog.NetworkEventType.request_abort, eventData));
     }
 
     public async UpdateMetrics(metrics: qlog.IEventABRStreamMetrics) {

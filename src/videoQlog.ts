@@ -77,7 +77,7 @@ export class VideoQlog {
                             type: qlog.VantagePointType.client
                         },
                         common_fields: {
-                            protocol_type: qlog.Protocol.dash,
+                            protocol_type: "HAS",
                             reference_time: "" + this.startTimestamp,
                             time_format: "relative",
                         },

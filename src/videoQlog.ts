@@ -182,15 +182,19 @@ export class VideoQlog {
     //     await this.registerEvent(this.wrapEventData(qlog.EventCategory.abr, qlog.ABREventType.representation_switch, eventData));
     // }
 
-    public async onRepresentationSwitch(mediaType: qlog.MediaType, to: string, from?: string) {
+    public async onRepresentationSwitch(mediaType: qlog.MediaType, to: string, to_bitrate: number, from?: string, from_bitrate?: number) {
         let eventData: qlog.IEventABRRepresentationSwitch = {
             media_type: mediaType,
             to: {
                 id: to,
+                bitrate: to_bitrate,
             }
         };
         if (from !== undefined) {
             eventData.from = {id: from};
+            if (from_bitrate !== undefined) {
+                eventData.from.bitrate = from_bitrate;
+            }
         }
         await this.registerEvent(this.wrapEventData(qlog.EventCategory.abr, qlog.ABREventType.representation_switch, eventData));
     }

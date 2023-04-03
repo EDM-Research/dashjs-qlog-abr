@@ -146,10 +146,18 @@ export class dashjs_qlog_player {
                     if (!this.active) { return; }
                     const data = hookArguments[0];
                     if (data['oldQuality']) {
-                        this.videoQlog.onRepresentationSwitch(data['mediaType'], data['newQuality'], data['oldQuality']);
+                        this.videoQlog.onRepresentationSwitch(data['mediaType'], data['newQuality'], data['bitrateInfo']['bitrate'], data['oldQuality']);
                     } else {
-                        this.videoQlog.onRepresentationSwitch(data['mediaType'], data['newQuality']);
+                        this.videoQlog.onRepresentationSwitch(data['mediaType'], data['newQuality'], data['bitrateInfo']['bitrate']);
                     }
+                });
+            }
+
+            else if (eventValue == mediaPlayerEvents.REPRESENTATION_SWITCH) {
+                this.player.on(eventValue, (...hookArguments: any) => {
+                    if (!this.active) { return; }
+                    const data = hookArguments[0];
+                    this.videoQlog.onRepresentationSwitch(data['mediaType'], data['currentRepresentation']['id'], data['currentRepresentation']['bandwidth']);
                 });
             }
 

@@ -37,7 +37,6 @@
         const autosave = urlSearchParams.get("autosave") === 'true' | false;
         const autoplay = urlSearchParams.get("autoplay") === 'true' | true;
         const userSimulatedInteractionFile = urlSearchParams.get("interaction");
-        console.log(userSimulatedInteractionFile);
         
         let player = new DashjsQlog.dashjs_qlog_player(video, videoManifestSource, autosave, status);
 
@@ -45,6 +44,7 @@
             await player.setup();
             
             if (userSimulatedInteractionFile) {
+                console.log('Simulating user interactions from', userSimulatedInteractionFile);
                 const interactionsResponse = await fetch(userSimulatedInteractionFile);
                 const interactionsQlog = await interactionsResponse.json();
 

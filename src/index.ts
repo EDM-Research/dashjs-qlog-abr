@@ -426,7 +426,7 @@ export class dashjs_qlog_player {
 
     public setSimulatedInteractions(interactions: Array<VideoQlog.IVideoEvent>) {
         this.simulatedInteractions = interactions;
-        console.log(this.simulatedInteractions);
+        // console.log(this.simulatedInteractions);
 
         setTimeout(() => {
             // execute
@@ -462,7 +462,7 @@ export class dashjs_qlog_player {
                 break;
         
             default:
-                console.log(itype, interaction)
+                console.warn('unable to simulate interaction of type', itype, interaction)
                 break;
         }
     }

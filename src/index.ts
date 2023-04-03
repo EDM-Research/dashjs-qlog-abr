@@ -134,7 +134,6 @@ export class dashjs_qlog_player {
                 this.player.on(eventValue, (...hookArguments: any) => {
                     if (!this.active) { return; }
                     const data = hookArguments[0];
-                    console.warn(data);
                     this.videoQlog.onRequestUpdate(this.url, 0);
                     //TODO size and rtt
                     this.videoQlog.onMetadataLoaded(data['data']['protocol'], data['data']['type'], this.url, "manifest.json", data['data']['mediaPresentationDuration'] * 1000);

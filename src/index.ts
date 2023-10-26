@@ -14,6 +14,60 @@ class LoggingHelpers {
     }
 }
 
+class RTTHelpers {
+    public min_rtt: number;
+    public smoothed_rtt: number;
+    public latest_rtt: number;
+    public rtt_variance: number;
+
+    private has_measurement: boolean;
+
+    private rttAlpha: number;
+    private oneMinusAlpha: number;
+    private rttBeta: number;
+    private oneMinusBeta: number;
+
+    constructor() {
+        this.min_rtt = 0;
+        this.smoothed_rtt = 0;
+        this.latest_rtt = 0;
+        this.rtt_variance = 0;
+
+        this.has_measurement = false;
+
+        this.rttAlpha = 0.125;
+        this.oneMinusAlpha = 1 - this.rttAlpha;
+        this.rttBeta = 0.25;
+        this.oneMinusBeta = 1 - this.rttBeta;
+    }
+
+    public metrics() {
+        return {
+            'min_rtt': this.min_rtt,
+            'smoothed_rtt': this.smoothed_rtt,
+            'latest_rtt': this.latest_rtt,
+            'rtt_variance': this.rtt_variance,
+        }
+    }
+
+    public update(rtt: number) {
+        if (rtt < this.min_rtt || this.min_rtt === 0) {
+            this.min_rtt = rtt;
+        }
+
+        this.latest_rtt = rtt;
+
+        if (!this.has_measurement) {
+            this.has_measurement = true;
+            this.smoothed_rtt = rtt;
+            this.rtt_variance = rtt / 2;
+        } else {
+            this.rtt_variance = (this.oneMinusBeta * this.rtt_variance) + (this.rttBeta * this.smoothed_rtt);
+            this.smoothed_rtt = (this.oneMinusAlpha*this.smoothed_rtt)+(this.rttAlpha*rtt);
+        }
+    }
+}
+
 export class dashjs_qlog_player {
     private active: boolean;
     private video: HTMLVideoElement;
@@ -27,6 +81,7 @@ export class dashjs_qlog_player {
     private statusBox: HTMLElement;
     private statusItems: { [key: string]: HTMLElement };
     private loggingHelpers: LoggingHelpers;
+    private rttHelpers: RTTHelpers;
     private simulatedInteractions: Array<VideoQlog.IVideoEvent>;
     private simulatedInteractionsIndex: number;
 
@@ -52,6 +107,7 @@ export class dashjs_qlog_player {
         this.statusItems = {};
         this.setStatus('status', 'uninitialised', 'black');
         this.loggingHelpers = new LoggingHelpers();
+        this.rttHelpers = new RTTHelpers();
         this.simulatedInteractions = new Array<VideoQlog.IVideoEvent>();
         this.simulatedInteractionsIndex = 0;
     }
@@ -65,9 +121,17 @@ export class dashjs_qlog_player {
         this.player.updateSettings({
             'debug': {
                 /* Can be LOG_LEVEL_NONE, LOG_LEVEL_FATAL, LOG_LEVEL_ERROR, LOG_LEVEL_WARNING, LOG_LEVEL_INFO or LOG_LEVEL_DEBUG */
-                //'logLevel': dashjs.LogLevel.LOG_LEVEL_DEBUG
+                'logLevel': dashjs.LogLevel.LOG_LEVEL_DEBUG
             }
         });
+
+        // this.player.getDebug().setCalleeNameVisible(true);
+        // this.player.getDebug().setLogTimestampVisible(true);
+        // this.player.getDebug().getLogger().debug('debug');
+        // this.player.getDebug().getLogger().error('error');
+        // this.player.getDebug().getLogger().fatal('fatal');
+        // this.player.getDebug().getLogger().info('info');
+        // this.player.getDebug().getLogger().warn('warn');
 
         const mediaPlayerEvents = dashjs.MediaPlayer.events;
         for (const eventKey in mediaPlayerEvents) {
@@ -118,7 +182,11 @@ export class dashjs_qlog_player {
                 this.player.on(eventValue, (...hookArguments: any) => {
                     if (!this.active) { return; }
                     const data = hookArguments[0];
-                    this.videoQlog.onRequestUpdate(data['request']['url'], data['request']['bytesLoaded'], data['request']['requestEndDate'] - data['request']['requestStartDate']);
+                    const rtt = data['request']['requestEndDate'] - data['request']['requestStartDate'];
+                    // TODO log error
+                    this.videoQlog.onRequestUpdate(data['request']['url'], data['request']['bytesLoaded'], rtt);
+                    this.rttHelpers.update(rtt);
+                    this.videoQlog.UpdateMetrics(this.rttHelpers.metrics());
                 });
             }
 
@@ -356,6 +424,7 @@ export class dashjs_qlog_player {
         });
 
         this.startLogging();
+        this.videoQlog.UpdateMetrics(this.rttHelpers.metrics());    // initial values
         this.setStatus('status', 'initialised', 'green');
     }
 
@@ -392,10 +461,10 @@ export class dashjs_qlog_player {
                 this.loggingHelpers.lastBitRate = bitrate;
             }
 
-            if (adaptationInfo && this.loggingHelpers.lastRepresentation !== adaptationInfo.id) {
-                await this.videoQlog.onRepresentationSwitch(qlog.MediaType.video, adaptationInfo.id, adaptationInfo.bandwidth);
-                this.loggingHelpers.lastRepresentation = adaptationInfo.id;
-            }
+            // if (adaptationInfo && this.loggingHelpers.lastRepresentation !== adaptationInfo.id) {
+            //     await this.videoQlog.onRepresentationSwitch(qlog.MediaType.video, adaptationInfo.id, adaptationInfo.bandwidth);
+            //     this.loggingHelpers.lastRepresentation = adaptationInfo.id;
+            // }
         }
     }
 
@@ -431,7 +500,7 @@ export class dashjs_qlog_player {
             // execute
             const interaction = this.simulatedInteractions[this.simulatedInteractionsIndex];
             this.simulateInteraction(interaction);
-            
+
             // queue
             this.queueNextInteractionSimulation();
         }, this.simulatedInteractions[this.simulatedInteractionsIndex].time - this.videoQlog.getCurrentTimeOffset());
@@ -457,9 +526,9 @@ export class dashjs_qlog_player {
                 break;
 
             case 'seek':
-                this.player.seek(interaction['data']['playhead']['ms']/1000);
+                this.player.seek(interaction['data']['playhead']['ms'] / 1000);
                 break;
-        
+
             default:
                 console.warn('unable to simulate interaction of type', itype, interaction)
                 break;
@@ -473,7 +542,7 @@ export class dashjs_qlog_player {
                 // execute
                 const interaction = this.simulatedInteractions[this.simulatedInteractionsIndex];
                 this.simulateInteraction(interaction);
-                
+
                 // queue
                 this.queueNextInteractionSimulation();
             }, this.simulatedInteractions[this.simulatedInteractionsIndex].time - this.videoQlog.getCurrentTimeOffset());

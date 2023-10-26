@@ -75,8 +75,8 @@ export class dashjs_qlog_player {
     private manifest: any;
     private autosave: boolean;
     private player: dashjs.MediaPlayerClass;
-    private eventPoller: NodeJS.Timer | undefined;
-    private eventPollerChrome: NodeJS.Timer | undefined;
+    private eventPoller: NodeJS.Timeout | undefined;
+    private eventPollerChrome: NodeJS.Timeout | undefined;
     private videoQlog: VideoQlog.VideoQlog;
     private statusBox: HTMLElement;
     private statusItems: { [key: string]: HTMLElement };
@@ -438,8 +438,8 @@ export class dashjs_qlog_player {
         if (dashMetrics && streamInfo) {
             const periodIdx = streamInfo.index;
             let repSwitch = dashMetrics.getCurrentRepresentationSwitch('video');
-            //@ts-expect-error
             let adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
+            //@ts-expect-error
             let adaptationInfo = repSwitch ? adaptation.Representation_asArray.find(function (rep: any) {
                 //@ts-expect-error
                 return rep.id === repSwitch.to;

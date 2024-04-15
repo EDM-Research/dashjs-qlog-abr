@@ -345,9 +345,9 @@ export class dashjs_qlog_player {
             else if (eventValue == mediaPlayerEvents.THROUGHPUT_MEASUREMENT_STORED) {
                 this.player.on(eventValue, (...hookArguments: any) => {
                     if (!this.active) { return; }
-                    console.warn(hookArguments);
                     const data = hookArguments[0];
-                    this.videoQlog.UpdateMetrics({bitrate: data['throughput']}) //TODO other metric?
+
+                    this.videoQlog.UpdateMetrics({bitrate: data['throughput']}) //TODO other metric? data has request info
                 });
             }
 

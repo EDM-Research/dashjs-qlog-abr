@@ -37,6 +37,7 @@
         const videoManifestSource = urlSearchParams.get("video");
         const autosave = urlSearchParams.get("autosave") === 'true' | false;
         const autoplay = urlSearchParams.get("autoplay") === 'true' | true;
+        const timeout = urlSearchParams.get("timeout") ? Number(urlSearchParams.get("timeout")) : undefined;
         const userSimulatedInteractionFile = urlSearchParams.get("interaction");
         
         let player = new DashjsQlog.dashjs_qlog_player(video, videoManifestSource, autosave, status);
@@ -65,7 +66,13 @@
             player.setStatus('setup took', (t2 - t1).toString() + " ms", 'black');
             player.setStatus('autosave', autosave.toString(), 'black');
         };
-        start();        
+        start();
+        if (timeout) {
+            setTimeout(async () => {
+                await video.pause();
+                await player.downloadCurrentLog();
+            }, timeout);
+        }
     </script>
 </body>
 

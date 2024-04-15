@@ -342,6 +342,15 @@ export class dashjs_qlog_player {
                 });
             }
 
+            else if (eventValue == mediaPlayerEvents.THROUGHPUT_MEASUREMENT_STORED) {
+                this.player.on(eventValue, (...hookArguments: any) => {
+                    if (!this.active) { return; }
+                    console.warn(hookArguments);
+                    const data = hookArguments[0];
+                    this.videoQlog.UpdateMetrics({bitrate: data['throughput']}) //TODO other metric?
+                });
+            }
+
             else if ([    // ignored events
                 mediaPlayerEvents.AST_IN_FUTURE,      // not useful
                 mediaPlayerEvents.METRICS_CHANGED,      // no data

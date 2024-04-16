@@ -85,6 +85,7 @@ export class dashjs_qlog_player {
     private simulatedInteractions: Array<VideoQlog.IVideoEvent>;
     private simulatedInteractionsIndex: number;
 
+    public doPolling: boolean;
     public autoplay: boolean;
 
     static readonly eventPollerInterval = 100;//ms
@@ -101,6 +102,7 @@ export class dashjs_qlog_player {
         this.autosave = autosave;
         this.player = dashjs.MediaPlayer().create();
         this.videoQlog = new VideoQlog.VideoQlog();
+        this.doPolling = false;
         this.eventPoller = undefined;
         this.eventPollerChrome = undefined;
         this.statusBox = statusBox;
@@ -487,11 +489,13 @@ export class dashjs_qlog_player {
 
     public async startLogging() {
         this.active = true;
-        this.eventPoller = setInterval(() => { this.eventPollerFunction() }, dashjs_qlog_player.eventPollerInterval);
-        //@ts-expect-error
-        if (this.video.webkitVideoDecodedByteCount !== undefined) {
-            this.eventPollerFunctionChrome(); // first log point is now
-            this.eventPollerChrome = setInterval(() => { this.eventPollerFunctionChrome() }, dashjs_qlog_player.bitratePollerInterval);
+        if (this.doPolling) {
+            this.eventPoller = setInterval(() => { this.eventPollerFunction() }, dashjs_qlog_player.eventPollerInterval);
+            //@ts-expect-error
+            if (this.video.webkitVideoDecodedByteCount !== undefined) {
+                this.eventPollerFunctionChrome(); // first log point is now
+                this.eventPollerChrome = setInterval(() => { this.eventPollerFunctionChrome() }, dashjs_qlog_player.bitratePollerInterval);
+            }
         }
     }
 

@@ -204,9 +204,15 @@ export class dashjs_qlog_player {
                 this.player.on(eventValue, (...hookArguments: any) => {
                     if (!this.active) { return; }
                     const data = hookArguments[0];
-                    this.videoQlog.onRequestUpdate(this.url, 0);
-                    //TODO size and rtt
                     this.videoQlog.onMetadataLoaded(data['data']['protocol'], data['data']['type'], this.url, "manifest.json", data['data']['mediaPresentationDuration'] * 1000);
+                });
+            }
+
+            else if (eventValue == mediaPlayerEvents.MANIFEST_LOADING_FINISHED) {
+                this.player.on(eventValue, (...hookArguments: any) => {
+                    if (!this.active) { return; }
+                    const data = hookArguments[0]['request'];                    
+                    this.videoQlog.onRequestUpdate(this.url, data['bytesTotal'], data['requestEndDate'] - data['requestStartDate']);
                 });
             }
 
@@ -332,7 +338,7 @@ export class dashjs_qlog_player {
                     const metric = data['metric'];
                     const metricData = data['value'];
 
-                    if (['BufferLevel', 'HttpList', 'BufferState', 'SchedulingInfo', 'RequestsQueue', 'PlayList', 'RepSwitchList', 'DVRInfo', 'ManifestUpdate', 'ManifestUpdatePeriodInfo', 'ManifestUpdateRepresentationInfo'].includes(metric)) {
+                    if (['BufferLevel', 'HttpList', 'BufferState', 'SchedulingInfo', 'RequestsQueue', 'PlayList', 'RepSwitchList', 'DVRInfo', 'ManifestUpdate', 'ManifestUpdatePeriodInfo', 'ManifestUpdateRepresentationInfo', 'DVBErrors'].includes(metric)) {
                         //ignore, no useful or redundant data
                     }
                     else if (metric == 'DroppedFrames') {
@@ -354,6 +360,16 @@ export class dashjs_qlog_player {
             }
 
             else if ([    // ignored events
+                mediaPlayerEvents.MANIFEST_LOADING_STARTED, // caught when finished
+                mediaPlayerEvents.BASE_URLS_UPDATED,
+                mediaPlayerEvents.TEXT_TRACKS_ADDED,
+                mediaPlayerEvents.STREAM_ACTIVATED,
+                mediaPlayerEvents.STREAM_DEACTIVATED,
+                mediaPlayerEvents.STREAM_UPDATED,
+                mediaPlayerEvents.STREAM_INITIALIZING,
+                mediaPlayerEvents.PERIOD_SWITCH_STARTED,
+                mediaPlayerEvents.PERIOD_SWITCH_COMPLETED,
+                mediaPlayerEvents.TRACK_CHANGE_RENDERED,
                 mediaPlayerEvents.AST_IN_FUTURE,      // not useful
                 mediaPlayerEvents.METRICS_CHANGED,      // no data
                 mediaPlayerEvents.METRIC_CHANGED,       // only mediaType

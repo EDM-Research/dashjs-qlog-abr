@@ -355,7 +355,7 @@ export class dashjs_qlog_player {
                     if (!this.active) { return; }
                     const data = hookArguments[0];
 
-                    this.videoQlog.UpdateMetrics({bitrate: data['throughput']}) //TODO other metric? data has request info
+                    this.videoQlog.UpdateMetrics({bitrate: data['throughput'] * 1000}) //TODO other metric? data has request info
                 });
             }
 
